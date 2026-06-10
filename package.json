@@ -7,5 +7,8 @@
   "scripts": {
     "build": "./build.sh",
     "analyze": "node analyze.js"
+  },
+  "devDependencies": {
+    "web-ext": "^10.3.0"
   }
 }
