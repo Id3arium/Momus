@@ -37,7 +37,7 @@ mkdir -p artifacts
 
 # Bundle only the files the extension ships; exclude docs, dev tooling, data, etc.
 npx web-ext build --source-dir . --artifacts-dir artifacts --overwrite-dest \
-    --ignore-files build.sh release.sh package.sh setup-dev.sh docs/ compare.html tools/ .venv/ .gitignore requirements.txt artifacts/ reviews/ reprocess.js analyze.js node_modules/ package.json package-lock.json .claude/
+    --ignore-files build.sh release.sh scripts/ docs/ tools/ .venv/ .gitignore artifacts/ reviews/ node_modules/ package.json package-lock.json .claude/
 
 echo ""
 echo "✅ Build complete!"

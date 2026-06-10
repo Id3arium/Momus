@@ -1,6 +1,6 @@
 # Momus — Google Maps Review Analyzer
 
-A Firefox extension that scrapes and analyzes Google Maps reviews for apartment hunting and location research. Momus scrapes every review from a location, flags fake-review patterns and red flags, and, once you've gathered several locations, ranks them side by side with the included `analyze.js` script and `compare.html` dashboard.
+A Firefox extension that scrapes and analyzes Google Maps reviews for apartment hunting and location research. Momus scrapes every review from a location, flags fake-review patterns and red flags, and, once you've gathered several locations, ranks them side by side with the included `scripts/analyze.js` script and `scripts/compare.html` dashboard.
 
 ## Features
 
@@ -138,7 +138,7 @@ This helps identify when Google is highlighting keywords that actually correlate
 
 ## Comparing Multiple Locations
 
-Once you've scraped several apartments, use the included `analyze.js` script to create a ranked spreadsheet:
+Once you've scraped several apartments, use the included `scripts/analyze.js` script to create a ranked spreadsheet:
 
 ```bash
 # Create a folder for your reviews
@@ -146,7 +146,7 @@ mkdir reviews
 mv ~/Downloads/gmaps_*.json reviews/
 
 # Run the analyzer
-node analyze.js reviews apartment_rankings.csv
+node scripts/analyze.js reviews apartment_rankings.csv
 ```
 
 This outputs a CSV file with columns:
@@ -162,7 +162,7 @@ This outputs a CSV file with columns:
 
 ### Customizing Weights
 
-Edit `analyze.js` to adjust what matters to you:
+Edit `scripts/analyze.js` to adjust what matters to you:
 
 ```javascript
 // Deal-breakers (high penalty)
@@ -188,7 +188,7 @@ Higher weights = worse penalty. The script focuses on **middle review red flags*
 
 After scraping several apartments, use the comparison dashboard for side-by-side visual analysis:
 
-1. Open `compare.html` in your browser
+1. Open `scripts/compare.html` in your browser
 2. Click "Load JSON Files" and select all files from the `reviews/` folder
 3. Compare apartments side-by-side with these insights:
    - **Jaggedness Score**: Measures how U-shaped the star distribution is (lower = more natural)
@@ -235,7 +235,7 @@ If the extension doesn't load all reviews, try:
 - **Content Scripts**: Run on Google Maps pages to scrape data
 
 ### Limitations
-- **One scrape at a time**: The extension scrapes a single location per run; multi-location ranking is done afterward by feeding the saved JSON files to `analyze.js` / `compare.html` (see "Comparing Multiple Locations" above)
+- **One scrape at a time**: The extension scrapes a single location per run; multi-location ranking is done afterward by feeding the saved JSON files to `scripts/analyze.js` / `scripts/compare.html` (see "Comparing Multiple Locations" above)
 - **Client-side only**: No server backend, all processing in the browser
 - **Google Maps only**: Doesn't scrape Yelp, ApartmentRatings, etc.
 - **No date parsing**: Dates are stored as-is ("2 months ago") not converted to timestamps
@@ -262,9 +262,12 @@ Ideas for future versions:
 ## Development
 
 ### File Structure
+The extension's own source lives at the root (the manifest references it by path);
+auxiliary tooling and docs live in `scripts/` and `docs/`.
 ```
 momus/
 ├── manifest.json           # Extension manifest
+├── background.js           # Background script
 ├── popup/                  # Extension popup UI
 │   ├── popup.html
 │   ├── popup.js
@@ -278,7 +281,16 @@ momus/
 ├── dictionaries/           # Spell check dictionaries
 │   ├── en_US.dic
 │   └── en_US.aff
-└── icons/                  # Extension icons
+├── icons/                  # Extension icons
+├── scripts/                # Auxiliary tooling (not part of the extension)
+│   ├── analyze.js          # Rank scraped locations into a CSV
+│   ├── reprocess.js        # Re-run analysis on saved JSON
+│   ├── compare.html        # Visual comparison dashboard
+│   ├── setup-dev.sh        # Python dev-env setup (uv)
+│   └── requirements.txt
+├── docs/                   # Guides and notes
+├── build.sh                # Build the extension package
+└── release.sh              # Cut a GitHub release
 ```
 
 ### Making Changes

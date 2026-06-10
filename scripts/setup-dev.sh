@@ -3,6 +3,10 @@
 
 set -e
 
+# Run from the repo root (this script lives in scripts/), so the .venv and
+# requirements.txt paths resolve no matter where it's invoked from.
+cd "$(dirname "$0")/.."
+
 echo "🔧 Setting up development environment for Momus (Google Maps Review Analyzer)..."
 echo ""
 
@@ -39,7 +43,7 @@ fi
 
 echo ""
 echo "📥 Installing dependencies..."
-uv pip install -r requirements.txt
+uv pip install -r scripts/requirements.txt
 
 echo ""
 echo "✅ Development environment ready!"
