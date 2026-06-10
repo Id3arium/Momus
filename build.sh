@@ -1,5 +1,5 @@
 #!/bin/bash
-# build.sh - Build Google Maps Review Scraper extension
+# build.sh - Build Momus (Google Maps Review Analyzer) extension
 
 set -e  # Exit on error
 
@@ -34,10 +34,10 @@ if [ "$USE_ZIP" = true ]; then
     echo "📦 Building with zip..."
 
     # Remove old builds
-    rm -f momus-gmaps-review-scanner.zip
+    rm -f momus.zip
 
     # Create ZIP file
-    zip -r momus-gmaps-review-scanner.zip \
+    zip -r momus.zip \
         manifest.json \
         popup/ \
         content/ \
@@ -51,8 +51,8 @@ if [ "$USE_ZIP" = true ]; then
         -x "*.sh"
 
     echo ""
-    echo "✅ Build complete: momus-gmaps-review-scanner.zip"
-    echo "   Size: $(du -sh momus-gmaps-review-scanner.zip | cut -f1)"
+    echo "✅ Build complete: momus.zip"
+    echo "   Size: $(du -sh momus.zip | cut -f1)"
 else
     echo ""
     echo "📦 Building with web-ext..."
@@ -81,7 +81,7 @@ echo "   1. Go to about:addons"
 echo "   2. Click the gear icon"
 echo "   3. Select 'Install Add-on From File'"
 if [ "$USE_ZIP" = true ]; then
-    echo "   4. Choose momus-gmaps-review-scanner.zip"
+    echo "   4. Choose momus.zip"
 else
     echo "   4. Choose the .zip file from artifacts/"
 fi

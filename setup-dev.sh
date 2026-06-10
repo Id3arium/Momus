@@ -3,7 +3,7 @@
 
 set -e
 
-echo "🔧 Setting up development environment for Google Maps Review Scraper..."
+echo "🔧 Setting up development environment for Momus (Google Maps Review Analyzer)..."
 echo ""
 
 # Make sure uv is in PATH

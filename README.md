@@ -1,6 +1,6 @@
-# Google Maps Review Scraper
+# Momus — Google Maps Review Analyzer
 
-A Firefox extension that scrapes and analyzes Google Maps reviews for apartment hunting and location research.
+A Firefox extension that scrapes and analyzes Google Maps reviews for apartment hunting and location research. Momus scrapes every review from a location, flags fake-review patterns and red flags, and — once you've gathered several locations — ranks them side by side with the included `analyze.js` script and `compare.html` dashboard.
 
 ## Features
 
@@ -27,8 +27,8 @@ A Firefox extension that scrapes and analyzes Google Maps reviews for apartment 
 1. Navigate to the extension directory
 2. Create a ZIP file of all contents:
    ```bash
-   cd gmaps-review-scraper
-   zip -r ../gmaps-scraper.zip *
+   cd momus
+   zip -r ../momus.zip *
    ```
 3. In Firefox, go to `about:addons`
 4. Click the gear icon and select "Install Add-on From File..."
@@ -224,7 +224,7 @@ If the extension doesn't load all reviews, try:
 - **Content Scripts**: Run on Google Maps pages to scrape data
 
 ### Limitations
-- **Single-location only**: This version scrapes one location at a time
+- **One scrape at a time**: The extension scrapes a single location per run; multi-location ranking is done afterward by feeding the saved JSON files to `analyze.js` / `compare.html` (see "Comparing Multiple Locations" above)
 - **Client-side only**: No server backend, all processing in the browser
 - **Google Maps only**: Doesn't scrape Yelp, ApartmentRatings, etc.
 - **No date parsing**: Dates are stored as-is ("2 months ago") not converted to timestamps
@@ -240,8 +240,8 @@ This extension:
 
 ## Future Enhancements
 
-Ideas for v2:
-- Batch mode (scrape multiple locations)
+Ideas for future versions:
+- In-extension batch mode (scrape multiple locations in one run, without the manual JSON export/import step)
 - Date parsing (convert relative dates to actual dates)
 - Cross-platform aggregation (Yelp, etc.)
 - Sentiment analysis
@@ -252,7 +252,7 @@ Ideas for v2:
 
 ### File Structure
 ```
-gmaps-review-scraper/
+momus/
 ├── manifest.json           # Extension manifest
 ├── popup/                  # Extension popup UI
 │   ├── popup.html

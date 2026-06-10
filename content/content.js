@@ -548,4 +548,4 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   }
 });
 
-console.log('[Content] Google Maps Review Scraper loaded and ready');
+console.log('[Content] Momus loaded and ready');

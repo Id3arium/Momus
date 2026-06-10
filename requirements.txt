@@ -1,4 +1,4 @@
-# Python dependencies for Google Maps Review Scraper extension development
+# Python dependencies for Momus (Google Maps Review Analyzer) extension development
 # Install with: uv pip install -r requirements.txt
 
 # Icon generation

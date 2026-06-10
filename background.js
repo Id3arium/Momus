@@ -27,4 +27,4 @@ browser.runtime.onMessage.addListener((message, sender) => {
   }
 });
 
-console.log('[Background] Google Maps Review Scraper background script loaded');
+console.log('[Background] Momus background script loaded');
