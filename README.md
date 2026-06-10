@@ -24,15 +24,26 @@ A Firefox extension that scrapes and analyzes Google Maps reviews for apartment 
 
 ### Option 2: Create a Distributable Package
 
-1. Navigate to the extension directory
-2. Create a ZIP file of all contents:
-   ```bash
-   cd momus
-   zip -r ../momus.zip *
-   ```
-3. In Firefox, go to `about:addons`
-4. Click the gear icon and select "Install Add-on From File..."
-5. Select the ZIP file
+Use the included build script — it validates `manifest.json`, then bundles only the
+files the extension actually needs (excluding docs, dev scripts, `reviews/`,
+`node_modules/`, and the analysis tooling):
+
+```bash
+./build.sh
+# or, equivalently:
+npm run build
+```
+
+If [`web-ext`](https://extensionworkshop.com/documentation/develop/getting-started-with-web-ext/)
+is installed (`npm install -g web-ext`), the script uses it and writes the package to
+`artifacts/`. Otherwise it falls back to a plain `zip`, producing `momus.zip` in the
+project root.
+
+Then, to install the package in Firefox:
+
+1. Go to `about:addons`
+2. Click the gear icon and select "Install Add-on From File..."
+3. Select the built `.zip`
 
 **Note**: For permanent installation, the extension needs to be signed by Mozilla.
 
