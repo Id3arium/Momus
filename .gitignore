@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Build output / release artifacts
+artifacts/
+
+# Generated data (scraped reviews + derived analysis/rankings) —
+# regenerable by the code, and contains third-party PII
+reviews/
+
+# OS / editor / local tooling
+.DS_Store
+.claude/settings.local.json

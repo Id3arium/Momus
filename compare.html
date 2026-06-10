@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apartment Comparison Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .controls {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    input[type="file"] {
+      margin-right: 10px;
+    }
+
+    button {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background-color: #1557b0;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow-x: auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background-color: #f8f9fa;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #5f6368;
+      border-bottom: 2px solid #e0e0e0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover {
+      background-color: #e8eaed;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    /* Jaggedness color coding */
+    .jagged-low {
+      background-color: #d4edda;
+    }
+
+    .jagged-medium {
+      background-color: #fff3cd;
+    }
+
+    .jagged-high {
+      background-color: #f8d7da;
+    }
+
+    /* Keyword sentiment colors */
+    .keyword-positive {
+      color: #2e7d32;
+      font-weight: 500;
+    }
+
+    .keyword-negative {
+      color: #c62828;
+      font-weight: 500;
+    }
+
+    /* Distribution chart */
+    .distribution-chart {
+      font-family: monospace;
+      font-size: 18px;
+      letter-spacing: 2px;
+    }
+
+    .distribution-chart span {
+      display: inline-block;
+      cursor: help;
+    }
+
+    .status {
+      color: #5f6368;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .keyword-item {
+      font-size: 13px;
+      margin: 2px 0;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #5f6368;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏢 Apartment Analysis Comparison</h1>
+
+  <div class="controls">
+    <input type="file" id="fileInput" multiple accept=".json">
+    <button onclick="loadFiles()">Load JSON Files</button>
+    <div class="status" id="status">Select JSON files from the reviews folder to compare</div>
+  </div>
+
+  <div class="table-container">
+    <table id="comparisonTable">
+      <thead>
+        <tr>
+          <th onclick="sortBy('name')">Name ▼</th>
+          <th onclick="sortBy('score')">Score ▼</th>
+          <th onclick="sortBy('extremePct')">Extreme % ▼</th>
+          <th onclick="sortBy('jaggedness')">Curve Jaggedness ▼</th>
+          <th>Distribution (1★→5★)</th>
+          <th>Top Keywords (Sentiment)</th>
+          <th onclick="sortBy('criticalFlags')">Critical Flags ▼</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr>
+          <td colspan="7" class="no-data">No data loaded. Select JSON files above.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    let apartmentData = [];
+    let currentSort = { column: 'score', ascending: false };
+
+    function loadFiles() {
+      const fileInput = document.getElementById('fileInput');
+      const files = fileInput.files;
+
+      if (files.length === 0) {
+        updateStatus('Please select at least one JSON file');
+        return;
+      }
+
+      updateStatus(`Loading ${files.length} files...`);
+      apartmentData = [];
+      let filesLoaded = 0;
+
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            const analyzed = analyzeApartment(data, file.name);
+            apartmentData.push(analyzed);
+            filesLoaded++;
+
+            if (filesLoaded === files.length) {
+              updateStatus(`Loaded ${files.length} apartments successfully`);
+              renderTable();
+            }
+          } catch (error) {
+            console.error(`Error loading ${file.name}:`, error);
+            updateStatus(`Error loading ${file.name}: ${error.message}`);
+          }
+        };
+
+        reader.onerror = () => {
+          updateStatus(`Failed to read ${file.name}`);
+        };
+
+        reader.readAsText(file);
+      });
+    }
+
+    function analyzeApartment(data, filename) {
+      // Extract name from URL or filename
+      const name = extractName(data.summary?.url, filename);
+
+      // Get distribution
+      const dist = data.stats?.distribution || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      // Calculate jaggedness (SD of consecutive ratios)
+      const ratios = [
+        (dist[2] || 0) / (dist[1] || 1),
+        (dist[3] || 0) / (dist[2] || 1),
+        (dist[4] || 0) / (dist[3] || 1),
+        (dist[5] || 0) / (dist[4] || 1)
+      ].filter(r => r > 0 && isFinite(r));
+
+      let jaggedness = 0;
+      if (ratios.length >= 3) {
+        const mean = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+        const variance = ratios.reduce((a, r) => a + Math.pow(r - mean, 2), 0) / ratios.length;
+        jaggedness = Math.sqrt(variance);
+      }
+
+      // Get top keywords with sentiment
+      const keywords = Object.entries(data.analysis?.googleKeywordCorrelation || {})
+        .sort((a, b) => b[1].reviewCount - a[1].reviewCount)
+        .slice(0, 3);
+
+      // Count critical flags (bedbugs, roaches, mold, crime)
+      const criticalFlagsList = ['bedbugs', 'bed bugs', 'roaches', 'cockroaches', 'mold', 'black mold', 'crime', 'break-in', 'stolen'];
+      const middleFlags = data.analysis?.middle?.redFlagSummary || {};
+      const criticalCount = criticalFlagsList.reduce((count, flag) => {
+        return count + (middleFlags[flag] || 0);
+      }, 0);
+
+      return {
+        name,
+        score: calculateSimpleScore(data),
+        avgRating: data.stats?.averageRating || 0,
+        totalReviews: data.stats?.totalReviews || 0,
+        extremePct: (data.analysis?.extremeReviewPct || 0) * 100,
+        jaggedness,
+        distribution: dist,
+        keywords,
+        criticalFlags: criticalCount,
+        middleFlags
+      };
+    }
+
+    function extractName(url, filename) {
+      // Try to extract from URL
+      if (url) {
+        const match = url.match(/\/maps\/place\/([^\/\?]+)/);
+        if (match && match[1]) {
+          return decodeURIComponent(match[1].replace(/\+/g, ' '));
+        }
+      }
+
+      // Fall back to filename
+      const nameMatch = filename.match(/^gmaps_(.+)\.json$/);
+      if (nameMatch) {
+        return nameMatch[1]
+          .split('_')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      }
+
+      return filename.replace('.json', '');
+    }
+
+    function calculateSimpleScore(data) {
+      // Simplified scoring: penalize extreme %, reward middle %
+      const extremePct = (data.analysis?.extremeReviewPct || 0) * 100;
+      const middlePct = (data.analysis?.middle?.percentageOfTotal || 0);
+      const criticalFlags = Object.values(data.analysis?.middle?.redFlagSummary || {})
+        .reduce((sum, count) => sum + count, 0);
+
+      return Math.round(
+        (100 - extremePct) +  // Less extreme = better
+        (middlePct * 2) -      // More middle = better
+        (criticalFlags * 5)    // Fewer flags = better
+      );
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      if (apartmentData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No data loaded</td></tr>';
+        return;
+      }
+
+      apartmentData.forEach(apt => {
+        const row = document.createElement('tr');
+
+        // Jaggedness color class
+        const jaggednessClass =
+          apt.jaggedness > 6 ? 'jagged-high' :
+          apt.jaggedness > 3 ? 'jagged-medium' : 'jagged-low';
+
+        row.innerHTML = `
+          <td><strong>${apt.name}</strong><br><small>${apt.totalReviews} reviews, ${apt.avgRating.toFixed(1)}★ avg</small></td>
+          <td>${apt.score}</td>
+          <td>${apt.extremePct.toFixed(0)}%</td>
+          <td class="${jaggednessClass}"><strong>${apt.jaggedness.toFixed(2)}</strong></td>
+          <td class="distribution-chart">${renderMiniChart(apt.distribution)}</td>
+          <td>${renderKeywords(apt.keywords)}</td>
+          <td>${apt.criticalFlags}</td>
+        `;
+
+        tbody.appendChild(row);
+      });
+    }
+
+    function renderMiniChart(dist) {
+      // Unicode block characters for mini bar chart
+      const blocks = ['', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+      const max = Math.max(...Object.values(dist));
+
+      if (max === 0) return '—';
+
+      return [1, 2, 3, 4, 5].map(star => {
+        const count = dist[star] || 0;
+        const height = Math.min(8, Math.ceil((count / max) * 8));
+        const block = blocks[height];
+        return `<span title="${star}★: ${count} reviews">${block}</span>`;
+      }).join(' ');
+    }
+
+    function renderKeywords(keywords) {
+      if (keywords.length === 0) {
+        return '<span style="color: #999;">No keywords</span>';
+      }
+
+      return keywords.map(([kw, stats]) => {
+        const isNegative = stats.lowRatingPct > 50;
+        const pct = isNegative ? stats.lowRatingPct : (100 - stats.lowRatingPct);
+        const sentiment = isNegative ? `${pct.toFixed(0)}% ≤3★` : `${pct.toFixed(0)}% ≥4★`;
+        const className = isNegative ? 'keyword-negative' : 'keyword-positive';
+        const flagCount = stats.topRedFlags.length;
+        const flagInfo = flagCount > 0 ? `, ${flagCount} flags` : '';
+
+        return `<div class="keyword-item"><span class="${className}">"${kw}"</span> (${sentiment}${flagInfo})</div>`;
+      }).join('');
+    }
+
+    function sortBy(column) {
+      // Toggle sort direction if clicking same column
+      if (currentSort.column === column) {
+        currentSort.ascending = !currentSort.ascending;
+      } else {
+        currentSort.column = column;
+        currentSort.ascending = false; // Default to descending for numbers
+      }
+
+      apartmentData.sort((a, b) => {
+        let aVal = a[column];
+        let bVal = b[column];
+
+        // Handle string sorting
+        if (column === 'name') {
+          aVal = aVal.toLowerCase();
+          bVal = bVal.toLowerCase();
+          return currentSort.ascending ?
+            aVal.localeCompare(bVal) :
+            bVal.localeCompare(aVal);
+        }
+
+        // Handle numeric sorting
+        const comparison = currentSort.ascending ? aVal - bVal : bVal - aVal;
+        return comparison;
+      });
+
+      renderTable();
+      updateStatus(`Sorted by ${column} (${currentSort.ascending ? 'ascending' : 'descending'})`);
+    }
+
+    function updateStatus(message) {
+      document.getElementById('status').textContent = message;
+    }
+  </script>
+</body>
+</html>

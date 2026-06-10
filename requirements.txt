@@ -1,0 +1,5 @@
+# Python dependencies for Google Maps Review Scraper extension development
+# Install with: uv pip install -r requirements.txt
+
+# Icon generation
+Pillow>=10.0.0
